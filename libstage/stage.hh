@@ -1177,6 +1177,9 @@ after constructing the block.*/
   /** Set the extent in Z of the block */
   void SetZ(double min, double max);
 
+  /** Retrieves the local or global z bounds */
+  const Bounds &GetZ(bool local = true) const { return local ? local_z : global_z; }
+
   void AppendTouchingModels(std::set<Model *> &touchers);
 
   /** Returns the first model that shares a bitmap cell with this model */
@@ -1186,6 +1189,12 @@ after constructing the block.*/
 
   void Rasterize(uint8_t *data, unsigned int width, unsigned int height, meters_t cellwidth,
                  meters_t cellheight);
+
+  /** Retrives the number of points of this block */
+  size_t GetCount() const { return pts.size(); }
+
+  /** Returns the i-th point of the block */
+  const point_t &operator[](size_t i) const { return pts[i]; }
 
   BlockGroup *group; ///< The BlockGroup to which this Block belongs.
 private:
@@ -1685,6 +1694,7 @@ forming a solid boundary around the bounding box of the model. */
   /** container for a callback function and a single argument, so
 they can be stored together in a list with a single pointer. */
 public:
+  const BlockGroup &GetBlockGroup() const { return blockgroup; }
   class cb_t {
   public:
     model_callback_t callback;
