@@ -497,7 +497,7 @@ void WorldGui::windowCb(Fl_Widget *, WorldGui *wg)
       return;
   }
 
-  puts("Stage: User closed window");
+  puts("Stage: User closed the simulation window.");
   wg->QuitAll();
 }
 
@@ -553,8 +553,8 @@ void WorldGui::fileExitCb(Fl_Widget *, WorldGui *wg)
 {
   const bool done = wg->closeWindowQuery();
   if (done) {
-    puts("User exited via menu");
-    exit(0);
+    puts("Stage: User exited via the main menu.");
+    wg->QuitAll();
   }
 }
 
@@ -643,8 +643,7 @@ void WorldGui::Stop()
   Fl::remove_idle((Fl_Timeout_Handler)UpdateCallback, this);
 
   // drawn 'cos we cancelled the timeout
-  canvas->redraw(); // in case something happened that will never be
-  // drawn otherwise
+  canvas->redraw(); // in case something happened that will never be drawn otherwise
 }
 
 void WorldGui::pauseCb(Fl_Widget *, WorldGui *wg)
