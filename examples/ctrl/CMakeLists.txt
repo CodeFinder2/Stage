@@ -14,11 +14,13 @@ foreach( PLUGIN ${PLUGINS} )
 endforeach()
 
 # activate the lasernoise plugin if we've a recent CMake:
-if (${CMAKE_VERSION} VERSION_LESS "3.1")
-  add_library( ${PLUGIN} MODULE ${PLUGIN}.cc )
+if (NOT CMAKE_VERSION VERSION_LESS 3.1)
+  add_library( lasernoise MODULE lasernoise.cc )
   set_property( TARGET lasernoise PROPERTY CXX_STANDARD 11 )
   set_property( TARGET lasernoise PROPERTY CXX_STANDARD_REQUIRED ON )
   set( PLUGINS ${PLUGINS} lasernoise )
+else()
+  message(WARNING "Your CMake version is too old, cannot build lasernoise controller plugin.")
 endif()
 
 # add extras to the list of plugins
