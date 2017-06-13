@@ -1,41 +1,34 @@
 /*
    File rangernoise.cc: (configurable) ranger noise plugin demo for Stage
    Author: Richard Vaughan, Adrian Böckenkamp
-   Date: 30 May 2017
+   Date: 13 Jun 2017
 */
 
 #include "stage.hh"
 
 #include <string>
 #include <vector>
-#include <cstdlib>
+#include <random>
 
 using namespace std;
 using namespace Stg;
 
-double mean = 1.0;
-double stddev = 0.05;
-
-double SimpleNormalDeviate()
-{
-  double x = 0.0;
-
-  for (unsigned short i = 0; i < 12; i++) {
-    x += rand() / (RAND_MAX + 1.0);
-  }
-
-  return (stddev * (x - 6.0) + mean);
-}
+double mean = 0.0;
+double stddev = 0.03;
 
 // process the ranger data
 int RangerUpdate(ModelRanger *mod, void *)
 {
-  // get the data
-  vector<meters_t> &scan = mod->GetSensorsMutable()[0].ranges;
+  static std::random_device rd;
+  static std::mt19937 gen(rd());
+  static std::normal_distribution<double> guassian_noise(mean, stddev);
+  // See http://en.cppreference.com/w/cpp/numeric/random/normal_distribution
 
-  if (scan.size() > 0) {
-    FOR_EACH (it, scan) {
-      *it *= SimpleNormalDeviate();
+  // make the data noisy:
+  ModelRanger::Sensor &sensor = mod->GetSensorsMutable()[0];
+  for (auto &it : sensor.ranges) {
+    if (it < sensor.range.max) { // don't make the range limit noisy (like in most real life cases)
+      it += guassian_noise(gen);
     }
   }
 
@@ -60,18 +53,16 @@ void SplitArgs(const string &text, const string &separators, vector<string> &wor
 // the model that gets called just after the sensor update is done.
 extern "C" int Init(Model *mod, CtrlArgs *args)
 {
-  srand(time(0));
-
   // tokenize the argument string into words
   vector<string> words;
   SplitArgs(args->worldfile, string(" \t"), words); // words[0] is the plugin name (= "lasernoise")
   if (words.size() == 2) { // just one parameter? consider this to be standard deviation
     stddev = atof(words[1].c_str());
-    //PRINT_MSG1("Setting stddev=%f of LaserNoiseV2 plugin.", stddev);
+    // PRINT_MSG1("Setting stddev=%f of LaserNoiseV2 plugin.", stddev);
   } else if (words.size() >= 3) { // two parameters given? this is mean and std. dev.
     mean = atof(words[1].c_str());
     stddev = atof(words[2].c_str());
-    //PRINT_MSG3("Setting mean=%f, stddev=%f of '%s' plugin.", mean, stddev, words[0].c_str());
+    // PRINT_MSG3("Setting mean=%f, stddev=%f of '%s' plugin.", mean, stddev, words[0].c_str());
   }
 
   mod->AddCallback(Model::CB_UPDATE, model_callback_t(RangerUpdate), NULL);

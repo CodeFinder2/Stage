@@ -1,4 +1,3 @@
-
 SET( PLUGINS
   fasr
   sink
@@ -6,32 +5,34 @@ SET( PLUGINS
   wander
   pioneer_flocking
   rasterize
-  lasernoise
   dynamic
 )
 
 # create a library module for each plugin and link libstage to each
-
 foreach( PLUGIN ${PLUGINS} )
-  ADD_LIBRARY( ${PLUGIN} MODULE ${PLUGIN}.cc )
-endforeach( PLUGIN )
-				
-ADD_LIBRARY( fasr2 MODULE fasr2.cc astar/findpath.cpp )
+  add_library( ${PLUGIN} MODULE ${PLUGIN}.cc )
+endforeach()
+
+# activate the lasernoise plugin if we've a recent CMake:
+if (${CMAKE_VERSION} VERSION_LESS "3.1")
+  add_library( ${PLUGIN} MODULE ${PLUGIN}.cc )
+  set_property( TARGET lasernoise PROPERTY CXX_STANDARD 11 )
+  set_property( TARGET lasernoise PROPERTY CXX_STANDARD_REQUIRED ON )
+  set( PLUGINS ${PLUGINS} lasernoise )
+endif()
 
 # add extras to the list of plugins
-SET( PLUGINS ${PLUGINS} fasr2 )
+add_library( fasr2 MODULE fasr2.cc astar/findpath.cpp )
+set( PLUGINS ${PLUGINS} fasr2 )
 
-set_source_files_properties( ${PLUGINS} PROPERTIES 
-  COMPILE_FLAGS "${FLTK_CFLAGS}" 
-)
+set_source_files_properties( ${PLUGINS} PROPERTIES COMPILE_FLAGS "${FLTK_CFLAGS}" )
 
 foreach( PLUGIN ${PLUGINS} )
-  TARGET_LINK_LIBRARIES( ${PLUGIN} stage ${OPENGL_LIBRARIES} )
-endforeach( PLUGIN )
+  target_link_libraries( ${PLUGIN} stage ${OPENGL_LIBRARIES} )
+endforeach()
 
 # delete the "lib" prefix from the plugin libraries
-SET_TARGET_PROPERTIES( ${PLUGINS} PROPERTIES PREFIX "" )
+set_target_properties( ${PLUGINS} PROPERTIES PREFIX "" )
 
 # install in <prefix>/lib
-install( TARGETS ${PLUGINS} DESTINATION ${PROJECT_PLUGIN_DIR}) 
-
+install( TARGETS ${PLUGINS} DESTINATION ${PROJECT_PLUGIN_DIR} )
