@@ -279,6 +279,24 @@ void ModelPosition::Load(void)
                 &velocity_bounds[3].max);
 }
 
+/*
+// return two random number from a zero-mean normalized gaussian
+// distribution.
+// to get mean A and std B, use A*y + B
+void gauss_rand(double &y1, double &y2)
+{
+  double x1, x2, w;
+  do {
+    x1 = 2.0 * drand48() - 1.0;
+    x2 = 2.0 * drand48() - 1.0;
+    w = x1 * x1 + x2 * x2;
+  } while (w >= 1.0);
+
+  w = sqrt((-2.0 * log(w)) / w);
+  y1 = x1 * w;
+  y2 = x2 * w;
+}
+*/
 
 void ModelPosition::Update(void)
 {
@@ -502,12 +520,57 @@ void ModelPosition::Update(void)
     // integrate our velocities to get an 'odometry' position estimate.
     const double dt = world->sim_interval / 1e6; // update interval convert to seconds
 
-    est_pose.a = normalize(est_pose.a + (vel.a * dt) * (1.0 + integration_error.a));
+    /*
+    // TODO: integrate this (more realistic) gaussion based error model correctly, see also
+    //       https://www.mail-archive.com/playerstage-commit@lists.sourceforge.net/msg02703.html
+    //       However, first tests have shown that this has the same problem as Stage "normal" odom
+    //       error (see fix of replacing "... * (1.0 + integration_error.{x,y,a});" with
+    //       "... * (2.0 + integration_error.{x,y,a});" in all equations/computations below) and
+    //       unfortunately, fixing that requires diving deeper in the code/logic.
+    //
+    Velocity integration_bias; // for testing, equals: odom_error [0.01 0.05 0.01 0.02 0.01 0.02]
+    integration_bias.x = 0.01;
+    integration_error.x = 0.05;
+    integration_bias.y = 0.01;
+    integration_error.y = 0.02;
+    integration_bias.a = 0.01;
+    integration_error.a = 0.02;
+
+    double oda = vel.a * dt, odx = vel.x * dt, ody = vel.y * dt, dx = 0, dy = 0;
+
+    // differential drive odometry error model
+    if (control_mode == CONTROL_VELOCITY && drive_mode == DRIVE_DIFFERENTIAL) {
+      double e1, e2;
+      gauss_rand(e1, e2);
+      double oodx = fabs(odx);
+      double ooda = fabs(oda);
+      double xvar = integration_error.x * integration_error.x; // variance @ 1 m (in m)
+      double yvar = integration_error.y * integration_error.y; // variance @ 1 m (in m)
+      double avar = integration_error.a * integration_error.a; // variance @ 1 rev (in rads)
+
+      est_pose.a = normalize(est_pose.a + oda +
+          ooda * integration_bias.a + oodx * integration_bias.y +
+          sqrt((ooda / (2.0 * M_PI)) * avar + oodx * yvar) * e1);
+      dx = odx + oodx * integration_bias.x + sqrt(oodx * xvar) * e2;
+    } else { // not a diff drive error model
+      est_pose.a = normalize(est_pose.a + oda * (1.0 + integration_bias.a));
+      dx = odx * (1.0 + integration_bias.x);
+      dy = ody * (1.0 + integration_bias.y);
+    }
+    const double cosa = cos(est_pose.a);
+    const double sina = sin(est_pose.a);
+    est_pose.x += dx * cosa + dy * sina;
+    est_pose.y -= dy * cosa - dx * sina;
+    */
+
+    // Quickfix: the "2.0" allows us to set integration_error.{x,y,a} to zero in order to NOT have
+    // any odom error in effect.
+    est_pose.a = normalize(est_pose.a + (vel.a * dt) * (2.0 + integration_error.a));
 
     const double cosa = cos(est_pose.a);
     const double sina = sin(est_pose.a);
-    const double dx = (vel.x * dt) * (1.0 + integration_error.x);
-    const double dy = (vel.y * dt) * (1.0 + integration_error.y);
+    const double dx = (vel.x * dt) * (2.0 + integration_error.x);
+    const double dy = (vel.y * dt) * (2.0 + integration_error.y);
 
     est_pose.x += dx * cosa + dy * sina;
     est_pose.y -= dy * cosa - dx * sina;
