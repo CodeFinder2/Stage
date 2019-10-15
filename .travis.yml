@@ -9,7 +9,9 @@ compiler:
 # Install all of the dependencies:
 install:
   - sudo apt-get -qq update
-  - sudo apt-get install -y libfltk1.3-dev libtool cmake build-essential libgl1-mesa-dev
+  - sudo apt-get -qq upgrade
+  - sudo apt-get install -y libfltk1.3-dev cmake libglu1-mesa-dev freeglut3-dev mesa-common-dev libpng-dev libjpeg-dev
+  - sudo apt-get -qq autoremove
 
 # Execute all of the commands which should make the build pass or fail
 script:
