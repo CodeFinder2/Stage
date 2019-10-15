@@ -98,6 +98,7 @@ find_package( PNG REQUIRED )
 
 set (FLTK_SKIP_FLUID TRUE) 
 find_package( FLTK REQUIRED )
+set (OpenGL_GL_PREFERENCE LEGACY )
 find_package( OpenGL REQUIRED )
 
 IF( NOT OPENGL_GLU_FOUND )
