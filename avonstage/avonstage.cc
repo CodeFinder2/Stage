@@ -358,7 +358,7 @@ std::pair<std::string, av_interface_t> proto_iface_pair_t;
 int RegisterModel(Stg::Model *mod, void *dummy)
 {
   // expensive to test this here! XX todo optmize this for large pops
-  if (mod->TokenStr() == "_ground_model")
+  if (mod->TokenStr() == "builtin_ground_model")
     return 0;
 
   static std::map<std::string, Reg> type_table;

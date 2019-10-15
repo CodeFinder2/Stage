@@ -157,7 +157,7 @@ World::World(const std::string &,
 
   ground = new Model(this, NULL, "model");
   assert(ground);
-  ground->SetToken("_ground_model"); // allow users to identify this unique model
+  ground->SetToken("builtin_ground_model"); // allow users to identify this unique model
   AddModelName(ground, ground->Token()); // add this name to the world's table
   ground->ClearBlocks();
   ground->SetGuiMove(false);
