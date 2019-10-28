@@ -29,7 +29,7 @@ Tested 2011.8.5 on:
 
 On Ubuntu 11.10 I install these packages:
 
-$ sudo apt-get install git cmake g++ fltk1.1-dev libjpeg8-dev libpng12-dev libglu1-mesa-dev libltdl-dev	
+$ sudo apt-get install git cmake g++ fltk1.1-dev libjpeg8-dev libpng-dev libglu1-mesa-dev libltdl-dev	
 
 On the Mac I use Homebrew, since MacPorts installs way more than Stage
 needs (http://mxcl.github.com/homebrew/). First, install Apple's XCode
@@ -94,7 +94,7 @@ The optional Avonstage web-enabled binary requires Avon >= 0.1.
 
 On a typical Debian based Linux distribution (like Ubuntu & Mint) you can install above dependencies using this command: (assuming that you have already installed build tools like cmake and build-essentials)
 
-sudo apt-get install pkg-config libfltk1.1-dev libgl1-mesa-dev libglu1-mesa-dev libpng12-dev libtool 
+sudo apt-get install pkg-config libfltk1.1-dev libgl1-mesa-dev libglu1-mesa-dev libpng-dev libtool 
 
 Please note that OpenGL libraries (gl1 & glu1) come with graphics card drivers and they are vendor based, therefore you need to inatall required drivers for your graphics card first. 
 
