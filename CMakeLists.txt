@@ -96,9 +96,9 @@ find_package( PNG REQUIRED )
 # SET( PNG_LIBRARIES /opt/X11/lib/libpng.dylib )
 # SET( PNG_INCLUDE_DIR /opt/X11/include )
 
-set (FLTK_SKIP_FLUID TRUE) 
-find_package( FLTK REQUIRED )
+set (FLTK_SKIP_FLUID TRUE )
 set (OpenGL_GL_PREFERENCE LEGACY )
+find_package( FLTK REQUIRED )
 find_package( OpenGL REQUIRED )
 
 IF( NOT OPENGL_GLU_FOUND )
