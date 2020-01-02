@@ -71,23 +71,29 @@ void SuperRegion::DrawOccupancy(void) const
 
   // outline regions
   const Region *r = &regions[0];
-  std::vector<GLfloat> rects(1000);
 
-  for (int y = 0; y < SUPERREGIONWIDTH; ++y)
-    for (int x = 0; x < SUPERREGIONWIDTH; ++x) {
+  // XX hack: this means only one window at a time will have its cells
+  // drawn properly, but OpenGL needs a non-stack vertex buffer
+  static std::vector<GLfloat> rects(1000);
+  rects.resize(0);
+
+  //char buf[16];
+  
+  for (unsigned int y = 0; y < SUPERREGIONWIDTH; ++y)
+    for (unsigned int x = 0; x < SUPERREGIONWIDTH; ++x) {
       if (r->count) // region contains some occupied cells
       {
         // outline the region
         glColor3f(0, 1, 0);
         glRecti(x << RBITS, y << RBITS, (x + 1) << RBITS, (y + 1) << RBITS);
-
-        // show how many cells are occupied
-        // snprintf( buf, 15, "%lu", r->count );
-        // Gl::draw_string( x<<RBITS, y<<RBITS, 0, buf );
-
-        // draw a rectangle around each occupied cell
-        for (int p = 0; p < REGIONWIDTH; ++p)
-          for (int q = 0; q < REGIONWIDTH; ++q) {
+	
+	// show how many cells are occupied	
+	//snprintf( buf, 15, "%lu", r->count );
+	//Gl::draw_string( x<<RBITS, y<<RBITS, 0, buf );
+	
+	// draw a rectangle around each occupied cell
+        for (unsigned int p = 0; p < REGIONWIDTH; ++p)
+          for (unsigned int q = 0; q < REGIONWIDTH; ++q) {
             const Cell &c = r->cells[p + (q * REGIONWIDTH)];
 
             if (c.blocks[0].size()) // layer 0
@@ -103,7 +109,7 @@ void SuperRegion::DrawOccupancy(void) const
               rects.push_back(yy + 1);
               rects.push_back(xx);
               rects.push_back(yy + 1);
-            }
+	    }
 
             if (c.blocks[1].size()) // layer 1
             {
@@ -120,10 +126,13 @@ void SuperRegion::DrawOccupancy(void) const
               rects.push_back(xx + dx);
               rects.push_back(yy + 1 - dx);
             }
-          }
+
+	  }
       }
       ++r; // next region quickly
     }
+
+  glEnableClientState(GL_VERTEX_ARRAY);
 
   if (rects.size()) {
     assert(rects.size() % 8 == 0); // should be full of squares
@@ -275,36 +284,6 @@ void Stg::Cell::AddBlock(Block *b, unsigned int layer)
 {
   assert(b);
   assert(layer < 2);
-
-  //  printf( "cell %p add block %p vec %u\n", this, b, (unsigned
-  //  int)blocks[layer].size() );
-  //  printf( "  before " );
-  //  for( size_t i=0; i<CELLBLOCKRECORD_COUNT; i++ )
-  //    printf("(%p,%d)",
-  // 	   cbrecords[layer][i].block,
-  // 	   //cbrecords[layer][i].block->group->mod.Token() : "NULL",
-  // 	   (int)cbrecords[layer][i].used );
-  //  puts("");
-
-  //  CellBlockRecord* cbr = &cbrecords[layer][0];
-  //  while( cbr->used ) ++cbr;
-
-  //  // bounds check
-  //  assert( &cbrecords[layer][0] - cbr < CELLBLOCKRECORD_COUNT *
-  //  sizeof(CellBlockRecord*));
-
-  //  // cbr now points to an unused record
-  //  cbr->block = b;
-  //  cbr->used = true;
-
-  // printf( "  after " );
-  //  for( size_t i=0; i<CELLBLOCKRECORD_COUNT; i++ )
-  //    printf("(%p,%d)",
-  // 	   cbrecords[layer][i].block,// ?
-  // 	   //	   cbrecords[layer][i].block->group->mod.Token() : "NULL",
-  // 	   (int)cbrecords[layer][i].used );
-  //  puts("");
-
   blocks[layer].push_back(b);
   b->rendered_cells[layer].push_back(this);
   region->AddBlock();
@@ -315,78 +294,6 @@ void Stg::Cell::RemoveBlock(Block *b, unsigned int layer)
   assert(b);
   assert(layer < 2);
 
-  //  printf( "cell %p remove block %p vec %u\n", this, b, (unsigned
-  //  int)blocks[layer].size() );
-  //  printf( "  before " );
-  //  for( size_t i=0; i<CELLBLOCKRECORD_COUNT; i++ )
-  //    printf("(%p,%d)",
-  // 	   cbrecords[layer][i].block,
-  // 	   //cbrecords[layer][i].block->group->mod.Token() : "NULL",
-  // 	   (int)cbrecords[layer][i].used );
-  //  puts("");
-
-  //  // zip along the cbrecords array until we find block b
-  //  CellBlockRecord* cbr = &cbrecords[layer][0];
-  //  while( cbr->block != b ) ++cbr;
-
-  //  // found check
-  //  assert( cbr->block == b );
-  //  // bounds check
-  //  assert( &cbrecords[layer][0] - cbr < CELLBLOCKRECORD_COUNT *
-  //  sizeof(CellBlockRecord*));
-
-  //  // cbr now points to the record for block b: invalidate the record
-  //  assert( cbr->block == b );
-
-  //  // mark the cbr as available for reuse
-  //  cbr->used = false;
-
-  // printf( "  after " );
-  //  for( size_t i=0; i<CELLBLOCKRECORD_COUNT; i++ )
-  //    printf("(%p,%d)",
-  // 	   cbrecords[layer][i].block,// ?
-  // 	   //	   cbrecords[layer][i].block->group->mod.Token() : "NULL",
-  // 	   (int)cbrecords[layer][i].used );
-  //  puts("");
-
-  std::vector<Block *> &blks(blocks[layer]);
-  const size_t len(blks.size());
-  if (len) {
-#if 0
-      // Use conventional STL style
-
-      // this special-case test is faster for worlds with simple models,
-      // which are the ones we want to be really fast. It's a small
-      // extra cost for worlds with several models in each cell. It
-      // gives a 5% overall speed increase in fasr.world.
-
-      if( (blks.size() == 1) &&
-	  (blks[0] == b) ) // special but common case
-	{
-	  blks.clear(); // cheap
-	}
-      else // the general but relatively expensive case
-	{
-	  EraseAll( b, blks );
-	}
-#else
-    // attempt faster removal loop
-    // O(n) * low constant array element removal
-    // this C-style pointer work looks to be very slightly faster than the STL
-    // way
-    Block **start = &blks[0]; // start of array
-    Block **r = &blks[0]; // read from here
-    Block **w = &blks[0]; // write to here
-
-    while (r < start + len) // scan down array, skipping 'this'
-    {
-      if (*r != b)
-        *w++ = *r;
-      ++r;
-    }
-    blks.resize(w - start);
-#endif
-  }
-
+  EraseAll( b, blocks[layer] );  
   region->RemoveBlock();
 }
